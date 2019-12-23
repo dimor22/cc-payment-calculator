@@ -1,0 +1,8 @@
+#history {
+    display: flex;
+    overflow: scroll;
+}
+
+#history div {
+    min-width: 370px;
+}
