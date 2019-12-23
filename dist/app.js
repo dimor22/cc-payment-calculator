@@ -1,6 +1,119 @@
+// CALCULATOR CONSTS
+var d = new Date(); // graph start month
+
+var year = d.getFullYear();
+var month = d.getMonth();
+var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var bal = 6893.72;
+var apr = 0.1865; // HELPER FUNCTIONS
+
+/**
+ *
+ * @param string
+ */
+
 var dd = function dd(string) {
   console.log(string);
 };
+/**
+ *
+ * @param balance
+ * @param counter
+ * @param payment
+ * @param apr
+ * @param graphData
+ */
+
+
+function calculateGraphData(balance, counter, payment, apr, graphData) {
+  while (balance > 0) {
+    dd(counter + " - Month");
+
+    var _month = new Calculator(balance, apr, 30, payment);
+
+    balance = _month.init();
+
+    if (balance > 0) {
+      graphData.push(balance);
+    }
+
+    counter++;
+  }
+}
+/**
+ *
+ * @param paymentData
+ * @returns {[]}
+ */
+
+
+function getGraphLabels(paymentData) {
+  var labelsDates = [];
+  var labelDate = new Date(year, month);
+  var labelMonth = month;
+  var labelYear = year;
+
+  _.each(paymentData, function () {
+    labelsDates.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2, 4));
+
+    if (labelMonth < 11) {
+      labelMonth++;
+    } else {
+      labelYear++;
+      labelMonth = 0;
+    }
+
+    labelDate.setFullYear(labelYear);
+    labelDate.setMonth(labelMonth);
+  });
+
+  return labelsDates;
+}
+/**
+ *
+ * @param paymentAmounts
+ * @param graphdata
+ */
+
+
+function getLongestLabelsArray(paymentAmounts, graphdata) {
+  var allValues = [];
+  var lengths = [];
+
+  _.each(paymentAmounts, function (amount) {
+    allValues.push(amount.labels);
+  });
+
+  _.each(allValues, function (values) {
+    lengths.push(values.length);
+  }); // GETS THE LONGEST SET OF LABELS
+
+
+  graphdata.labels = allValues[_.indexOf(lengths, Math.max.apply(Math, lengths))];
+}
+/**
+ *
+ * @param papymentAmounts
+ * @param graphdata
+ */
+
+
+function prepareDatasets(papymentAmounts, graphdata) {
+  graphdata.datasets = [];
+
+  _.each(paymentAmounts, function (amount) {
+    graphdata.datasets.push({
+      label: amount.label,
+      backgroundColor: 'transparent',
+      borderColor: amount.color,
+      data: amount.data
+    });
+  });
+}
+/**
+ * CALCULATOR CLASS
+ */
+
 
 var Calculator =
 /*#__PURE__*/
@@ -83,163 +196,68 @@ function () {
   return Calculator;
 }();
 
-var bal = 6893.72;
-var balance = bal;
-var payment = 600;
-var apr = 0.1865;
-var counter = 1;
-var dataBill = [];
-dataBill.push(balance);
+var paymentAmounts = [{
+  balance: bal,
+  counter: 1,
+  payment: 600,
+  data: [],
+  labels: [],
+  color: 'green',
+  label: '$600'
+}, {
+  balance: bal,
+  counter: 1,
+  payment: 500,
+  data: [],
+  labels: [],
+  color: 'orange',
+  label: '$500'
+}, {
+  balance: bal,
+  counter: 1,
+  payment: 400,
+  data: [],
+  labels: [],
+  color: 'blue',
+  label: '$400'
+}, {
+  balance: bal,
+  counter: 1,
+  payment: 245,
+  data: [],
+  labels: [],
+  color: 'purple',
+  label: '$250'
+}, {
+  balance: bal,
+  counter: 1,
+  payment: 177,
+  data: [],
+  labels: [],
+  color: 'red',
+  label: '$177'
+}]; // SET PAYMENT AMOUNTS DATA AND LABELS
 
-while (balance > 0) {
-  dd(counter + " - Month");
+_.each(paymentAmounts, function (amount) {
+  amount.data.push(bal);
+  calculateGraphData(bal, amount.counter, amount.payment, apr, amount.data);
+  amount.labels = getGraphLabels(amount.data);
+});
+/**
+ * GRAPH CODE
+ */
 
-  var _month = new Calculator(balance, apr, 30, payment);
 
-  balance = _month.init();
-
-  if (balance > 0) {
-    dataBill.push(balance);
-  }
-
-  counter++;
-}
-
-dd('payment option 1: ' + dataBill); // reset data
-
-balance = bal;
-counter = 0;
-payment = 245;
-var dataBill2 = [];
-dataBill2.push(balance);
-
-while (balance > 0) {
-  dd(counter + " - Month");
-
-  var _month2 = new Calculator(balance, apr, 30, payment);
-
-  balance = _month2.init();
-
-  if (balance > 0) {
-    dataBill2.push(balance);
-  }
-
-  counter++;
-}
-
-dd('payment option 2: ' + dataBill2); // reset data
-
-balance = bal;
-counter = 0;
-payment = 177;
-var dataBill3 = [];
-dataBill3.push(balance);
-
-while (balance > 0) {
-  dd(counter + " - Month");
-
-  var _month3 = new Calculator(balance, apr, 30, payment);
-
-  balance = _month3.init();
-
-  if (balance > 0) {
-    dataBill3.push(balance);
-  }
-
-  counter++;
-}
-
-dd('payment option 3: ' + dataBill3); // draw graph
+var graphdata = {};
+getLongestLabelsArray(paymentAmounts, graphdata);
+prepareDatasets(paymentAmounts, graphdata); // DRAW GRAPHS
 
 var ctx = $('#myChart');
-var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-var d = new Date(); // graph start month
-
-var year = d.getFullYear();
-var month = d.getMonth();
-var labelsDates = [];
-var labelDate = new Date(year, month);
-var labelMonth = month;
-var labelYear = year;
-
-_.each(dataBill, function () {
-  labelsDates.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2, 4));
-
-  if (labelMonth < 11) {
-    labelMonth++;
-  } else {
-    labelYear++;
-    labelMonth = 0;
-  }
-
-  labelDate.setFullYear(labelYear);
-  labelDate.setMonth(labelMonth);
-});
-
-dd(labelsDates); // second payment option
-
-var labelsDates2 = [];
-labelMonth = month;
-labelYear = year;
-
-_.each(dataBill2, function () {
-  labelsDates2.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2, 4));
-
-  if (labelMonth < 11) {
-    labelMonth++;
-  } else {
-    labelYear++;
-    labelMonth = 0;
-  }
-
-  labelDate.setFullYear(labelYear);
-  labelDate.setMonth(labelMonth);
-});
-
-dd(labelsDates2); // third payment option
-
-var labelsDates3 = [];
-labelMonth = month;
-labelYear = year;
-
-_.each(dataBill3, function () {
-  labelsDates3.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2, 4));
-
-  if (labelMonth < 11) {
-    labelMonth++;
-  } else {
-    labelYear++;
-    labelMonth = 0;
-  }
-
-  labelDate.setFullYear(labelYear);
-  labelDate.setMonth(labelMonth);
-});
-
-dd(labelsDates3);
 var chart = new Chart(ctx, {
   // The type of chart we want to create
   type: 'line',
   // The data for our dataset
-  data: {
-    labels: labelsDates3,
-    datasets: [{
-      label: '$600',
-      backgroundColor: 'rgb(242, 171, 47,0.5)',
-      borderColor: 'orange',
-      data: dataBill
-    }, {
-      label: '$245',
-      backgroundColor: 'rgb(242, 171, 47,0.5)',
-      borderColor: 'red',
-      data: dataBill2
-    }, {
-      label: '$177',
-      backgroundColor: 'rgb(242, 171, 47,0.5)',
-      borderColor: 'purple',
-      data: dataBill3
-    }]
-  },
+  data: graphdata,
   // Configuration options go here
   options: {}
 });

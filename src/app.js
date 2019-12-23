@@ -1,269 +1,274 @@
+// CALCULATOR CONSTS
+const d = new Date(); // graph start month
+const year = d.getFullYear();
+const month = d.getMonth();
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const bal = 6893.72;
+const apr = 0.1865;
 
-const dd = function(string) {
-  console.log(string);
+// HELPER FUNCTIONS
+
+/**
+ *
+ * @param string
+ */
+const dd = function (string) {
+    console.log(string);
 }
 
+/**
+ *
+ * @param balance
+ * @param counter
+ * @param payment
+ * @param apr
+ * @param graphData
+ */
+function calculateGraphData(balance, counter, payment, apr, graphData) {
+    while (balance > 0) {
+        dd(`${counter} - Month`);
+        let month = new Calculator(balance, apr, 30, payment);
+        balance = month.init();
+        if (balance > 0) {
+            graphData.push(balance);
+        }
+        counter++;
+    }
+}
+
+/**
+ *
+ * @param paymentData
+ * @returns {[]}
+ */
+function getGraphLabels(paymentData) {
+    let labelsDates = [];
+    let labelDate = new Date(year, month);
+    let labelMonth = month;
+    let labelYear = year;
+
+    _.each(paymentData, function () {
+        labelsDates.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2, 4));
+
+        if (labelMonth < 11) {
+            labelMonth++;
+        } else {
+            labelYear++;
+            labelMonth = 0;
+        }
+
+        labelDate.setFullYear(labelYear);
+        labelDate.setMonth(labelMonth);
+    });
+
+    return labelsDates;
+}
+
+/**
+ *
+ * @param paymentAmounts
+ * @param graphdata
+ */
+function getLongestLabelsArray(paymentAmounts, graphdata) {
+    let allValues = [];
+    let lengths = [];
+    _.each(paymentAmounts, function (amount) {
+        allValues.push(amount.labels);
+    });
+    _.each(allValues, function (values) {
+        lengths.push(values.length);
+    });
+
+    // GETS THE LONGEST SET OF LABELS
+    graphdata.labels = allValues[_.indexOf(lengths, Math.max(...lengths))];
+
+}
+
+/**
+ *
+ * @param papymentAmounts
+ * @param graphdata
+ */
+function prepareDatasets(papymentAmounts, graphdata) {
+    graphdata.datasets = [];
+    _.each(paymentAmounts, function (amount) {
+        graphdata.datasets.push(
+            {
+                label: amount.label,
+                backgroundColor: 'transparent',
+                borderColor: amount.color,
+                data: amount.data
+            }
+        )
+    });
+}
+
+
+/**
+ * CALCULATOR CLASS
+ */
 class Calculator {
 
 
-  constructor(balance, apr, days, payment = 0) {
-    this.balance = balance;
-    this.apr = apr;
-    this.days = days;
-    this.payment = payment;
-    this.option = payment === 0 ? 'Min.' : payment;
-    this.error = [];
+    constructor(balance, apr, days, payment = 0) {
+        this.balance = balance;
+        this.apr = apr;
+        this.days = days;
+        this.payment = payment;
+        this.option = payment === 0 ? 'Min.' : payment;
+        this.error = [];
 
-  }
+    }
 
-  getMonthlyInterestRate () {
-    const dailyPercentage = this.apr / 365;
-    const dailyInterest = dailyPercentage * this.balance;
-    this.monthlyInterest = dailyInterest * this.days;
-    dd('Monthly Interest: ' + this.monthlyInterest);
-  }
+    getMonthlyInterestRate() {
+        const dailyPercentage = this.apr / 365;
+        const dailyInterest = dailyPercentage * this.balance;
+        this.monthlyInterest = dailyInterest * this.days;
+        dd('Monthly Interest: ' + this.monthlyInterest);
+    }
 
-  getMinimumPayment () {
-    const minimumPrincipalPayment = this.balance * 0.01; // 1%
-    this.minimumMonthlyPayment = minimumPrincipalPayment + this.monthlyInterest;
-    dd('Minimum payment: ' + this.minimumMonthlyPayment);
-    dd('Money towards principal is: ' + minimumPrincipalPayment);
-  }
+    getMinimumPayment() {
+        const minimumPrincipalPayment = this.balance * 0.01; // 1%
+        this.minimumMonthlyPayment = minimumPrincipalPayment + this.monthlyInterest;
+        dd('Minimum payment: ' + this.minimumMonthlyPayment);
+        dd('Money towards principal is: ' + minimumPrincipalPayment);
+    }
 
-  getNextMonthBalance () {
-    const minPrincipalPayment = this.minimumMonthlyPayment - this.monthlyInterest;
-    this.nextMonthBalance = this.balance - minPrincipalPayment;
-    dd('Current balance: ' + this.balance);
-    dd('Next balance paying Min.: ' + this.nextMonthBalance);
-  }
-
-
-
-  // User related methods
-
-  getUserPayment () {
-    this.userPrincipalPayment = this.payment - this.monthlyInterest;
-    dd('User payment: ' + this.payment);
-    dd('Money towards principal is: ' + this.userPrincipalPayment);
-  }
-
-  getUserNextMonthBalance () {
-    this.nextMonthBalance = this.balance - this.userPrincipalPayment;
-    dd('Current balance: ' + this.balance);
-    dd('Next balance paying more than Min.: ' + this.nextMonthBalance);
-  }
-
-
-
-  init(){
-
-    this.getMonthlyInterestRate();
-
-    if ( this.payment > 0 && this.monthlyInterest > this.payment ) {
-      this.error.push(`Payment must be greater than the monthly interest rate of ${this.monthlyInterest}.`);
+    getNextMonthBalance() {
+        const minPrincipalPayment = this.minimumMonthlyPayment - this.monthlyInterest;
+        this.nextMonthBalance = this.balance - minPrincipalPayment;
+        dd('Current balance: ' + this.balance);
+        dd('Next balance paying Min.: ' + this.nextMonthBalance);
     }
 
 
-    if ( _.size(this.error) === 0 ){
+    // User related methods
 
-      if ( this.payment > 0 ) {
+    getUserPayment() {
+        this.userPrincipalPayment = this.payment - this.monthlyInterest;
+        dd('User payment: ' + this.payment);
+        dd('Money towards principal is: ' + this.userPrincipalPayment);
+    }
 
-        this.getUserPayment();
-        this.getUserNextMonthBalance();
-
-      } else {
-        this.getMinimumPayment();
-        this.getNextMonthBalance();
-      }
+    getUserNextMonthBalance() {
+        this.nextMonthBalance = this.balance - this.userPrincipalPayment;
+        dd('Current balance: ' + this.balance);
+        dd('Next balance paying more than Min.: ' + this.nextMonthBalance);
+    }
 
 
-      dd(`End of option ${this.option} payment.
+    init() {
+
+        this.getMonthlyInterestRate();
+
+        if (this.payment > 0 && this.monthlyInterest > this.payment) {
+            this.error.push(`Payment must be greater than the monthly interest rate of ${this.monthlyInterest}.`);
+        }
+
+
+        if (_.size(this.error) === 0) {
+
+            if (this.payment > 0) {
+
+                this.getUserPayment();
+                this.getUserNextMonthBalance();
+
+            } else {
+                this.getMinimumPayment();
+                this.getNextMonthBalance();
+            }
+
+
+            dd(`End of option ${this.option} payment.
         ========================================`);
 
-      return this.nextMonthBalance;
+            return this.nextMonthBalance;
 
-    } else {
-      _.each(this.error, function(value) {
-        dd(value);
-      })
+        } else {
+            _.each(this.error, function (value) {
+                dd(value);
+            })
+        }
+
     }
 
-  }
-
 
 }
 
-const bal = 6893.72
-let balance = bal;
-let payment = 600;
-const apr = 0.1865;
-let counter = 1;
-var dataBill =[];
-
-dataBill.push(balance);
-
-while (balance > 0) {
-  dd(`${counter} - Month`);
-  let month = new Calculator(balance, apr, 30, payment);
-  balance = month.init();
-  if ( balance > 0 ) {
-    dataBill.push(balance);
-  }
-  counter++;
-}
-
-dd('payment option 1: ' + dataBill);
-
-
-// reset data
-balance = bal;
-counter = 0;
-payment = 245;
-let dataBill2 = [];
-
-dataBill2.push(balance);
-
-while (balance > 0) {
-  dd(`${counter} - Month`);
-  let month = new Calculator(balance, apr, 30, payment);
-  balance = month.init();
-  if ( balance > 0 ) {
-    dataBill2.push(balance);
-  }
-  counter++;
-}
-
-dd('payment option 2: ' + dataBill2);
-
-
-// reset data
-balance = bal;
-counter = 0;
-payment = 177;
-let dataBill3 = [];
-
-dataBill3.push(balance);
-
-while (balance > 0) {
-  dd(`${counter} - Month`);
-  let month = new Calculator(balance, apr, 30, payment);
-  balance = month.init();
-  if ( balance > 0 ) {
-    dataBill3.push(balance);
-  }
-  counter++;
-}
-
-dd('payment option 3: ' + dataBill3);
-
-
-
-
-
-// draw graph
-
-var ctx = $('#myChart');
-
-var monthNames = ['Jan', 'Feb', 'Mar', 'Apr','May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-var d = new Date(); // graph start month
-var year = d.getFullYear();
-var month = d.getMonth();
-
-var labelsDates = [];
-var labelDate = new Date(year, month);
-var labelMonth = month;
-var labelYear = year;
-
-_.each(dataBill, function() {
-  labelsDates.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2,4));
-
-  if ( labelMonth < 11 ) {
-    labelMonth++;
-  } else {
-    labelYear++;
-    labelMonth = 0;
-  }
-
-  labelDate.setFullYear(labelYear);
-  labelDate.setMonth(labelMonth);
-})
-
-dd(labelsDates);
-
-
-// second payment option
-var labelsDates2 = [];
-
-labelMonth = month;
-labelYear = year;
-
-_.each(dataBill2, function() {
-  labelsDates2.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2,4));
-
-  if ( labelMonth < 11 ) {
-    labelMonth++;
-  } else {
-    labelYear++;
-    labelMonth = 0;
-  }
-
-  labelDate.setFullYear(labelYear);
-  labelDate.setMonth(labelMonth);
-})
-
-dd(labelsDates2);
-
-
-// third payment option
-var labelsDates3 = [];
-
-labelMonth = month;
-labelYear = year;
-
-_.each(dataBill3, function() {
-  labelsDates3.push(monthNames[labelMonth] + ' ' + labelYear.toString().substring(2,4));
-
-  if ( labelMonth < 11 ) {
-    labelMonth++;
-  } else {
-    labelYear++;
-    labelMonth = 0;
-  }
-
-  labelDate.setFullYear(labelYear);
-  labelDate.setMonth(labelMonth);
-})
-
-dd(labelsDates3);
-
-var chart = new Chart(ctx, {
-  // The type of chart we want to create
-  type: 'line',
-  // The data for our dataset
-  data: {
-    labels: labelsDates3,
-    datasets: [{
-      label: '$600',
-      backgroundColor: 'rgb(242, 171, 47,0.5)',
-      borderColor: 'orange',
-      data: dataBill
+let paymentAmounts = [
+    {
+        balance: bal,
+        counter: 1,
+        payment: 600,
+        data: [],
+        labels: [],
+        color: 'green',
+        label: '$600'
     },
-      {
-        label: '$245',
-        backgroundColor: 'rgb(242, 171, 47,0.5)',
-        borderColor: 'red',
-        data: dataBill2
-      },
-      {
-        label: '$177',
-        backgroundColor: 'rgb(242, 171, 47,0.5)',
-        borderColor: 'purple',
-        data: dataBill3
-      }]
-  },
+    {
+        balance: bal,
+        counter: 1,
+        payment: 500,
+        data: [],
+        labels: [],
+        color: 'orange',
+        label: '$500'
+    },
+    {
+        balance: bal,
+        counter: 1,
+        payment: 400,
+        data: [],
+        labels: [],
+        color: 'blue',
+        label: '$400'
+    },
+    {
+        balance: bal,
+        counter: 1,
+        payment: 245,
+        data: [],
+        labels: [],
+        color: 'purple',
+        label: '$250'
+    },
+    {
+        balance: bal,
+        counter: 1,
+        payment: 177,
+        data: [],
+        labels: [],
+        color: 'red',
+        label: '$177'
+    }
+];
 
-  // Configuration options go here
-  options: {}
+// SET PAYMENT AMOUNTS DATA AND LABELS
+_.each(paymentAmounts, function (amount) {
+    amount.data.push(bal);
+    calculateGraphData(bal, amount.counter, amount.payment, apr, amount.data);
+    amount.labels = getGraphLabels(amount.data);
+});
+
+
+/**
+ * GRAPH CODE
+ */
+
+let graphdata = {};
+getLongestLabelsArray(paymentAmounts, graphdata);
+prepareDatasets(paymentAmounts, graphdata);
+
+
+// DRAW GRAPHS
+let ctx = $('#myChart');
+let chart = new Chart(ctx, {
+    // The type of chart we want to create
+    type: 'line',
+    // The data for our dataset
+    data: graphdata,
+
+    // Configuration options go here
+    options: {}
 });
