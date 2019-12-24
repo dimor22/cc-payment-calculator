@@ -5,4 +5,13 @@
 
 #history div {
     min-width: 370px;
+    background: whitesmoke;
+    margin: 1%;
+    padding: 1%;
+    box-shadow: 5px 5px 11px #c5c5c5;
+    border: 1px solid #dadada;
+}
+
+#history div table {
+    margin: 0 0 11% 0;
 }

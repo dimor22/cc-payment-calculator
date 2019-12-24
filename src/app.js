@@ -5,7 +5,7 @@ const month = d.getMonth();
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 
-numeral.defaultFormat('0,0');
+numeral.defaultFormat('$0,0.00');
 
 // HELPER FUNCTIONS
 
@@ -335,7 +335,8 @@ $(function () {
               td.innerHTML = line.text;
               let td2 = document.createElement('td');
               tr.appendChild(td2);
-              td2.innerHTML = line.value;
+              let numberFormatted = numeral(line.value);
+              td2.innerHTML = numberFormatted.format();
 
           });
       });
