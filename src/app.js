@@ -4,8 +4,6 @@ const year = d.getFullYear();
 const month = d.getMonth();
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const bal = 6893.72;
-const apr = 0.1865;
 
 numeral.defaultFormat('0,0');
 
@@ -27,7 +25,7 @@ const dd = function (string) {
  * @param apr
  * @param graphData
  */
-function calculateGraphData(balance, payment, apr, graphData, output) {
+function calculateGraphData(balance, payment, apr, graphData, output, payments) {
     let counter = 1;
     while (balance > 0) {
         dd(`${counter} - Month`);
@@ -35,9 +33,10 @@ function calculateGraphData(balance, payment, apr, graphData, output) {
 
         let monthlyObj = month.init();
         balance = monthlyObj.nextMonthBalance;
-        if (balance > 0) {
+        if (balance > 0 ) {
             graphData.push(balance);
             output.push(_.concat([{text: 'Month - ', value: counter}], monthlyObj.output));
+            payments.push(monthlyObj.payment);
         }
         counter++;
     }
@@ -136,17 +135,17 @@ class Calculator {
     }
 
     getMinimumPayment() {
-        const minimumPrincipalPayment = this.balance * 0.01; // 1%
-        this.minimumMonthlyPayment = minimumPrincipalPayment + this.monthlyInterest;
+        let payment = this.balance * 0.01;
+        this.minimumPrincipalPayment = payment > 25 ? payment : 25; // 1% or $25 whatever is higher
+        this.minimumMonthlyPayment = this.minimumPrincipalPayment + this.monthlyInterest;
         dd('Minimum payment: ' + this.minimumMonthlyPayment);
         this.output.push({text:'Minimum payment:', value:this.minimumMonthlyPayment});
-        dd('Money towards principal is: ' + minimumPrincipalPayment);
-        this.output.push({text:'Money towards principal is:', value: minimumPrincipalPayment});
+        dd('Money towards principal is: ' + this.minimumPrincipalPayment);
+        this.output.push({text:'Money towards principal is:', value: this.minimumPrincipalPayment});
     }
 
     getNextMonthBalance() {
-        const minPrincipalPayment = this.minimumMonthlyPayment - this.monthlyInterest;
-        this.nextMonthBalance = this.balance - minPrincipalPayment;
+        this.nextMonthBalance = this.balance - this.minimumMonthlyPayment;
         dd('Current balance: ' + this.balance);
         this.output.push({text: 'Current balance:', value: this.balance});
         dd('Next balance paying Min.: ' + this.nextMonthBalance);
@@ -200,7 +199,8 @@ class Calculator {
 
             return {
               nextMonthBalance: this.nextMonthBalance,
-              output: this.output
+              output: this.output,
+              payment: this.minimumMonthlyPayment || this.userPrincipalPayment
             }
 
         } else {
@@ -216,56 +216,66 @@ class Calculator {
 
 let paymentAmounts = [
     {
-        balance: bal,
+        balance: 6893.72,
+        apr: 0.1865,
         payment: 600,
         data: [],
         labels: [],
         color: 'green',
-        label: '$600',
-        output: []
+        label: 'Wells CC',
+        output: [],
+        payments: []
     },
     {
-        balance: bal,
-        payment: 500,
-        data: [],
-        labels: [],
-        color: 'orange',
-        label: '$500',
-        output: []
-    },
-    {
-        balance: bal,
-        payment: 400,
-        data: [],
-        labels: [],
-        color: 'blue',
-        label: '$400',
-        output: []
-    },
-    {
-        balance: bal,
-        payment: 245,
-        data: [],
-        labels: [],
-        color: 'purple',
-        label: '$250',
-        output: []
-    },
-    {
-        balance: bal,
+        balance: 6999,
+        apr: 0.1174,
         payment: 177,
         data: [],
         labels: [],
+        color: 'orange',
+        label: 'Wells Loan',
+        output: [],
+        payments: []
+    },
+    {
+        balance: 2935,
+        apr: 0.2149,
+        payment: 200,
+        data: [],
+        labels: [],
+        color: 'blue',
+        label: 'Barcley',
+        output: [],
+        payments: []
+    },
+    {
+        balance: 900.54,
+        apr: 0.2049,
+        payment: 300,
+        data: [],
+        labels: [],
+        color: 'purple',
+        label: 'Discovery',
+        output: [],
+        payments: []
+    },
+    {
+        balance: 1804.64,
+        apr: 0.1674,
+        payment: 200,
+        data: [],
+        labels: [],
         color: 'red',
-        label: '$177',
-        output: []
+        label: 'Citi',
+        output: [],
+        payments: []
     }
 ];
 
 // SET PAYMENT AMOUNTS DATA AND LABELS
 _.each(paymentAmounts, function (amount) {
-    amount.data.push(bal);
-    calculateGraphData(bal, amount.payment, apr, amount.data, amount.output);
+    amount.data.push(amount.balance);
+    calculateGraphData(amount.balance, amount.payment, amount.apr, amount.data, amount.output, amount.payments);
     amount.labels = getGraphLabels(amount.data);
 });
 
@@ -298,12 +308,22 @@ let chart = new Chart(ctx, {
 
 $(function () {
 
-
-  console.log(paymentAmounts[0].output);
+    let totalMonthly = [];
+    let counter = 0;
 
   _.each(paymentAmounts, function (payment) {
       let div = document.createElement('div');
       document.getElementById('history').appendChild(div);
+
+      _.each(payment.payments, function(amount) {
+          let num = _.isNaN(totalMonthly[counter]) ? 0 : totalMonthly[counter];
+        totalMonthly[counter] = num + amount;
+        counter++;
+      });
+
+      counter = 0;
+
+
       _.each(payment.output, function (month) {
           let table = document.createElement('table');
           div.appendChild(table);
@@ -321,5 +341,5 @@ $(function () {
       });
   });
   //historySection.html(lists);
-    //console.log(lists);
+    console.log(totalMonthly);
 });
